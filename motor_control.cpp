@@ -8,30 +8,31 @@
 #include <fstream>
 #include <iostream>
 
-// #define POSTEST      // 位置环'开环'测试
-// #define CURRTEST     // 电流环'开环'测试
-#define TRACKTEST  // 电流环'闭环'测试
-// #define SINWAVE    // 开启后发送正弦波信号，关闭后电流环发送±1A的方波信号
-// #define USENONBLOCK  // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
-// #define PRINTTIMEOUT  // 开启后打印多少个Timeout接收到信号
-// #define SPLITSENDRECV  // 将接收与发送分离开
+#define CURR_CLOSE_TEST  // 电流环'闭环'测试
+// #define CURR_OPEN_TEST  // 电流环'开环'测试
+// #define POSTEST        // 位置环'开环'测试
+// #define USENONBLOCK    // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
+// #define PRINTTIMEOUT   // 开启后打印多少个Timeout接收到信号
+// #define SPLITSENDRECV  // 将接收与发送线程分离开
 
 namespace {
-const int kFrequency = 500;        // 控制频率(Hz)，数值允许1~500
-const int kMotorCount = 12;        // 电机总数
-const bool kSaveData = true;       // 是否保存测试数据
-const float kKp = 8.0;             // 伺服跟踪Kp
-const float kKd = 0.3;             // 伺服跟踪Kd
+const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.5~500
+const int kMotorCount = 1;         // 电机总数
+const float kKp = 5.0;             // 伺服跟踪Kp
+const float kKd = 0.2;             // 伺服跟踪Kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
+const bool kSaveData = true;       // 是否保存测试数据
 
-const double kSquareCycle = 2000;  // 方波周期
-const float kAmplitude = 2.0;      // sin幅值
-const float kSinCycle = 2.0;       // sin周期
-const float kSinOmega = 2 * M_PI / kSinCycle;
+const int kWaveForm = 1;              // 0使用方波信号，1使用正弦波信号
+const double kSquareCycle = 1;        // 方波周期（s）
+const double kSquareAmplitude = 1.0;  // 方波幅值（A）
+const float kSinAmplitude = 2.0;      // sin幅值（A）
+const float kSinCycle = 2.0;          // sin周期（s）
+const float kSinOmega = 2.f * M_PI / kSinCycle;
 const int kMotorPrint = 0;
 
 const float kGearRatio = 8.f;
-const float kDriverRatio = 2.f * 3.14159265358979323846 / kGearRatio;
+const float kDriverRatio = 2.f * M_PI / kGearRatio;
 const float kKneeRatio = 1.f / 0.72266f;
 const float kTorqueCoefficient = 0.21f;  // Nm/A
 
@@ -40,50 +41,25 @@ volatile std::sig_atomic_t stop_signal;
 
 MotorControl m_c;
 
-timeval diff(timeval start, timeval end) {
-  timeval temp;
-  if ((end.tv_usec - start.tv_usec) < 0) {
-    temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-    temp.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
-  } else {
-    temp.tv_sec = end.tv_sec - start.tv_sec;
-    temp.tv_usec = end.tv_usec - start.tv_usec;
-  }
-  return temp;
-}
-double tos(timeval start) {
-  double temp;
-  temp = start.tv_usec * 0.000001;
-  temp += (double)start.tv_sec;
-  return temp;
-}
-
 int main() {
   std::signal(SIGINT, [](int ctrl_c) { stop_signal = ctrl_c; });
   std::ofstream log;
-  log.open("../data.txt");
+  log.open("../plot/data.txt");
 
-  struct timeval count_t0, count_t1;
-  struct timezone tz;
   float set_pos[12] = {0};
   float set_vel[12] = {0};
-  float set_cur[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  int send_iterval = 500 / kFrequency;
-  if (kFrequency == 2) {
-    send_iterval = 1000;
-  }
-  unsigned int sleep_count = 1800;
-  int last_t = 0;
-  int curr_t = 0;
+  float set_cur[12] = {0};
+
   int iteration = 0;
-  int enable_send = 1;
+  bool enable_send = false;
   double time_now = 0.0;
+  unsigned int sleep_count = 1820;
+  int send_iterval = 500 / kFrequency;
 
   m_c.init_bus();
-  // enable motor
   for (int i = 0; i < kMotorCount; ++i) {
-    std::cout << "id: " << i << " enabled" << std::endl;
     m_c.set_en(i, true);
+    std::cout << "id: " << i << " enabled" << std::endl;
   }
   std::cout << "CAN communication is setup successfully." << std::endl
             << "WARNING: Make sure the motor is enabled." << std::endl
@@ -92,92 +68,95 @@ int main() {
 
 #ifdef SPLITSENDRECV
   m_c.init_recv_thread();
-#endif
+#endif  // SPLITSENDRECV
 
 #ifndef POSTEST
   float fai_bias[12] = {0};
   for (int n = 0; n < 10; ++n) {
-    for (int ii = 0; ii < kMotorCount; ++ii) {
-      m_c.set_value(ii, 0, 0.f);
+    for (int i = 0; i < kMotorCount; ++i) {
+      m_c.set_value(i, 0, 0.f);
     }
     usleep(5000);
   }
-  for (int ii = 0; ii < kMotorCount; ++ii) {
-    fai_bias[ii] = std::asin(m_c.motors[ii].position_real);
+  for (int i = 0; i < kMotorCount; ++i) {
+    fai_bias[i] = std::asin(m_c.motors[i].position_real);
   }
-#endif
+#endif  // POSTEST
 
-  gettimeofday(&count_t1, &tz);
   Timer timer;
   timer.start();
+
   while (true) {
     time_now = timer.getSeconds();
-    enable_send = iteration % send_iterval;
+    enable_send = iteration % send_iterval == 0;
 
-#ifdef SINWAVE
-    gettimeofday(&count_t0, &tz);
-    for (int ii = 0; ii < kMotorCount; ++ii) {
-      set_pos[ii] = kAmplitude * std::sin(kSinOmega * time_now - fai_bias[ii]);
-      set_vel[ii] = kAmplitude * kSinOmega * std::cos(kSinOmega * time_now - fai_bias[ii]);
-      set_cur[ii] = 0;
-    }
-    // std::cout << "cmd=sin(w*t),t=" << time_now << ",cmd=" << set_value << std::endl;
-#else
-    curr_t = std::fmod(time_now, kSquareCycle);
-    if (curr_t < last_t) {
-      for (int ii = 0; ii < kMotorCount; ++ii) {
-        set_cur[ii] *= -1;
+    if (kWaveForm == 0) {
+      int mod = time_now / kSquareCycle;
+      if (mod % 2 == 0) {
+        for (int i = 0; i < kMotorCount; ++i) {
+          set_cur[i] = -kSquareAmplitude;
+        }
+      } else {
+        for (int i = 0; i < kMotorCount; ++i) {
+          set_cur[i] = kSquareAmplitude;
+        }
       }
+      // printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
+    } else if (kWaveForm == 1) {
+      for (int i = 0; i < kMotorCount; ++i) {
+        set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now - fai_bias[i]);
+        set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now - fai_bias[i]);
+        set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now - fai_bias[i]);
+      }
+      // printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
+    } else {
+      printf("[Error] Undefined wave form!\n");
+      return -1;
     }
-    last_t = curr_t;
-#endif
 
 #ifdef POSTEST
-    if (enable_send == 0) {
-      for (int ii = 0; ii < kMotorCount; ++ii) {
-        m_c.set_value(ii, 2, set_pos[ii]);
+    if (enable_send) {
+      for (int i = 0; i < kMotorCount; ++i) {
+        m_c.set_value(i, 2, set_pos[i]);
       }
       printf("Now %6.4f, SetPos %2.6f rad, ReadPos %2.6f rad, ReadVel %2.6f, ReadCurr %2.6f\n", time_now,
              set_pos[kMotorPrint], m_c.motors[kMotorPrint].position_real, m_c.motors[kMotorPrint].velocity_real,
              m_c.motors[kMotorPrint].current_real);
     }
-#endif
-#ifdef CURRTEST
-    if (enable_send == 0) {
-      for (int ii = 0; ii < kMotorCount; ++ii) {
-        set_cur[ii] = set_pos[ii];
-        m_c.set_value(ii, 0, set_cur[ii]);
+#endif  // POSTEST
+
+#ifdef CURR_OPEN_TEST
+    if (enable_send) {
+      for (int i = 0; i < kMotorCount; ++i) {
+        m_c.set_value(i, 0, set_cur[i]);
       }
       printf("Now %6.4f, SetCurr %2.6f A, ReadCurr %2.6f A, ReadPos %2.6f, ReadVel %2.6f\n", time_now,
              set_pos[kMotorPrint], m_c.motors[kMotorPrint].current_real, m_c.motors[kMotorPrint].position_real,
              m_c.motors[kMotorPrint].velocity_real);
     }
-#endif
-#ifdef TRACKTEST
-    if (enable_send == 0) {
-      for (int ii = 0; ii < kMotorCount; ++ii) {
-        // set_cur[ii] = kKp * (set_pos[ii] - m_c.motors[ii].position_real) +
-        //               kKd * (set_vel[ii] - 0.5 * m_c.motors[ii].velocity_real);
-        float value = set_cur[ii] * 0.2;  // 0.2表示0.2A
-        m_c.set_value(ii, 0, value);
+#endif  // CURR_OPEN_TEST
+
+#ifdef CURR_CLOSE_TEST
+    if (enable_send) {
+      for (int i = 0; i < kMotorCount; ++i) {
+        set_cur[i] =
+            kKp * (set_pos[i] - m_c.motors[i].position_real) + kKd * (set_vel[i] - 0.5 * m_c.motors[i].velocity_real);
+        m_c.set_value(i, 0, set_cur[i]);
       }
       printf("Now %6.4f, SetPos %2.6f, ReadPos %2.6f, SetVel %2.6f, ReadVel %2.6f, SetCurr %2.6f, ReadCurr %2.6f\n",
              time_now, set_pos[kMotorPrint], m_c.motors[kMotorPrint].position_real, set_vel[kMotorPrint],
              m_c.motors[kMotorPrint].velocity_real, set_cur[kMotorPrint], m_c.motors[kMotorPrint].current_real);
     }
-#endif
+#endif  // CURR_CLOSE_TEST
 
-    if (kSaveData) {
+    if (enable_send && kSaveData) {
       log << time_now << " ";
-      for (int ii = 0; ii < kMotorCount; ++ii) {
-        log << set_pos[ii] << " " << m_c.motors[ii].position_real << " " << set_vel[ii] << " "
-            << m_c.motors[ii].velocity_real << " " << set_cur[ii] << " " << m_c.motors[ii].current_real << " ";
+      for (int i = 0; i < kMotorCount; ++i) {
+        log << set_pos[i] << " " << m_c.motors[i].position_real << " " << set_vel[i] << " "
+            << m_c.motors[i].velocity_real << " " << set_cur[i] << " " << m_c.motors[i].current_real << " ";
       }
       log << "\n";
     }
-
-    iteration++;
-    usleep(sleep_count);
 
     if (stop_signal) {
       log.close();
@@ -190,7 +169,11 @@ int main() {
       m_c.de_init_bus();
       return 0;
     }
+
+    iteration++;
+    usleep(sleep_count);
   }
+  return 0;
 }
 
 MotorControl::MotorControl() {
@@ -705,9 +688,11 @@ void MotorControl::set_value(int idx, int mode, float value) {
       //   snd_value = value / motors[idx].ke;
       snd_value = value * motors[idx].direction / motors[idx].tau_ratio / motors[idx].ke;
       // if (id == 0) {
-      //   printf("%f %f %f\n", motors[idx].position_real, value, motors[idx].current_real);
+      //   printf("%f %f %f\n", motors[idx].position_real, value,
+      //   motors[idx].current_real);
       //   // printf("%f %f\n", send_value, motors[idx].current_real);
-      //   // printf("Can bus %d, send_tau: %f, send_curr: %f, real_curr: %f\n", id, value, send_value,
+      //   // printf("Can bus %d, send_tau: %f, send_curr: %f, real_curr: %f\n",
+      //   id, value, send_value,
       //   //        motors[idx].current_real);
       // }
       break;
@@ -718,7 +703,8 @@ void MotorControl::set_value(int idx, int mode, float value) {
       break;
     case 2:  // Position mode
       cmd = 0x09;
-      //   snd_value = (value + motors[idx].position_zero) / motors[idx].pos_ratio;
+      //   snd_value = (value + motors[idx].position_zero) /
+      //   motors[idx].pos_ratio;
       snd_value = (value - motors[idx].position_zero) / motors[idx].direction / motors[idx].pos_ratio;
       break;
   }
