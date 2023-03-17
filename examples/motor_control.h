@@ -1,5 +1,5 @@
-#ifndef EF12ACB7_5F1F_4B57_9832_6A4D2026D115
-#define EF12ACB7_5F1F_4B57_9832_6A4D2026D115
+#ifndef EXAMPLES_MOTOR_CONTROL_H_
+#define EXAMPLES_MOTOR_CONTROL_H_
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -11,10 +11,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define CAN_TIMEOUT 1000  // 定义超时
+#define CAN_TIMEOUT 1000 // 定义超时
 
 class Motor_Control {
- public:
+public:
   Motor_Control();
   ~Motor_Control();
 
@@ -28,31 +28,35 @@ class Motor_Control {
   bool is_rsv1_l;
 
   int init_bus();
-  int send_by_bus(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len);
+  int send_by_bus(unsigned char ch, unsigned short id, unsigned char *data,
+                  unsigned char len);
   int send_by_bus(unsigned char ch, unsigned short id);
-  int send_by_bus_block(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len);
-  int send_by_bus0_timeout(unsigned short id, unsigned char* data, unsigned char len);
-  int send_by_bus1_timeout(unsigned short id, unsigned char* data, unsigned char len);
+  int send_by_bus_block(unsigned char ch, unsigned short id,
+                        unsigned char *data, unsigned char len);
+  int send_by_bus0_timeout(unsigned short id, unsigned char *data,
+                           unsigned char len);
+  int send_by_bus1_timeout(unsigned short id, unsigned char *data,
+                           unsigned char len);
   void bus_rsv();
   void bus0_rsv();
   void bus1_rsv();
-  int de_init_bus();  //
-  void data_proc(unsigned char ch, struct can_frame* frame);
+  int de_init_bus(); //
+  void data_proc(unsigned char ch, struct can_frame *frame);
 
   struct MOTOR_VAR {
-    unsigned short id;     // node id
-    unsigned char ch;      // can cn
-    unsigned char opmode;  // operate mode
-    unsigned char statu;   // motor status
-    float current_set;     // 电流设定值
-    float current_real;    // 电流实际值
-    float current_k;       // 力矩系数
-    float velocity_set;    // 速度设定值
-    float velocity_real;   // 速度真实值
-    float position_set;    // 位置设定值
-    float position_real;   // 位置真实值
-    float position_zero;   // 位置零位
-    float position_k;      // 角度系数
+    unsigned short id;    // node id
+    unsigned char ch;     // can cn
+    unsigned char opmode; // operate mode
+    unsigned char statu;  // motor status
+    float current_set;    // 电流设定值
+    float current_real;   // 电流实际值
+    float current_k;      // 力矩系数
+    float velocity_set;   // 速度设定值
+    float velocity_real;  // 速度真实值
+    float position_set;   // 位置设定值
+    float position_real;  // 位置真实值
+    float position_zero;  // 位置零位
+    float position_k;     // 角度系数
   };
 
   enum MOTOR_MODE {
@@ -95,7 +99,7 @@ class Motor_Control {
   enum OPERATE { GET, SET };
 
   MOTOR_VAR motors[12];
-  void float_char(float value, unsigned char* buff);
+  void float_char(float value, unsigned char *buff);
   void set_en(int idx, bool en);
   void set_value(int idx, int mode, float value);
   void motor_cmd(int idx, int mode, int can_cmd, float value);
@@ -103,4 +107,4 @@ class Motor_Control {
   void send_loop();
 };
 
-#endif /* EF12ACB7_5F1F_4B57_9832_6A4D2026D115 */
+#endif // EXAMPLES_MOTOR_CONTROL_H_
