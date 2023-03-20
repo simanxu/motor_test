@@ -52,8 +52,8 @@ int main() {
   float set_cur[12] = {0};
 
   int iteration = 0;
-  bool enable_send = false;
   double time_now = 0.0;
+  bool enable_send = false;
   unsigned int sleep_count = 1820;
   int send_iterval = 500 / kFrequency;
 
@@ -71,6 +71,9 @@ int main() {
   m_c.init_recv_thread();
 #endif  // SPLITSENDRECV
 
+  Timer timer;
+  timer.start();
+
 #ifndef POSTEST
   float fai_bias[12] = {0};
   for (int n = 0; n < 10; ++n) {
@@ -80,12 +83,12 @@ int main() {
     usleep(5000);
   }
   for (int i = 0; i < kMotorCount; ++i) {
-    fai_bias[i] = std::asin(m_c.motors[i].position_real);
+    time_now = timer.getSeconds();
+    m_c.motors[i].position_zero = m_c.motors[i].position_real;
+    fai_bias[i] = -kSinOmega * time_now;
+    // std::cout << "id: " << i << " fai_bias[i]: " << fai_bias[i] << std::endl;
   }
 #endif  // POSTEST
-
-  Timer timer;
-  timer.start();
 
   while (true) {
     time_now = timer.getSeconds();
@@ -105,11 +108,11 @@ int main() {
       // printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
     } else if (kWaveForm == 1) {
       for (int i = 0; i < kMotorCount; ++i) {
-        set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now - fai_bias[i]);
-        set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now - fai_bias[i]);
-        set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now - fai_bias[i]);
+        set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
+        set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
+        set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
-      // printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
+      printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
     } else {
       printf("[Error] Undefined wave form!\n");
       return -1;
