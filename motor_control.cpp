@@ -425,7 +425,7 @@ int MotorControl::send_by_bus_block(unsigned char ch, unsigned short id, unsigne
     case 1:
       nbytes = write(can_s1, &frame, sizeof(frame));
 #ifdef PRINT_CAN_SEND
-      printf("Can bus 0 send command at time %f.\n", timer_.getMs());
+      printf("Can bus 1 send command at time %f.\n", timer_.getMs());
 #endif  // PRINT_CAN_SEND
       bus1_rsv();
       break;
