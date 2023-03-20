@@ -14,12 +14,13 @@
 // #define USENONBLOCK    // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
 // #define PRINTTIMEOUT   // 开启后打印多少个Timeout接收到信号
 // #define SPLITSENDRECV  // 将接收与发送线程分离开
+#define PRINT_CAN_SEND
 
 namespace {
 const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.5~500
 const int kMotorCount = 1;         // 电机总数
-const float kKp = 5.0;             // 伺服跟踪Kp
-const float kKd = 0.2;             // 伺服跟踪Kd
+const float kKp = 20.0;            // 伺服跟踪Kp
+const float kKd = 0.01;            // 伺服跟踪Kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
 const bool kSaveData = true;       // 是否保存测试数据
 
@@ -27,7 +28,7 @@ const int kWaveForm = 1;              // 0使用方波信号，1使用正弦波�
 const double kSquareCycle = 1;        // 方波周期（s）
 const double kSquareAmplitude = 1.0;  // 方波幅值（A）
 const float kSinAmplitude = 2.0;      // sin幅值（A）
-const float kSinCycle = 2.0;          // sin周期（s）
+const float kSinCycle = 0.5;          // sin周期（s）
 const float kSinOmega = 2.f * M_PI / kSinCycle;
 const int kMotorPrint = 0;
 
@@ -269,6 +270,8 @@ MotorControl::MotorControl() {
   memset(&rsv_frame0, 0, sizeof(struct can_frame));
   memset(&rsv_frame1, 0, sizeof(struct can_frame));
   init_bus();
+  // Init timer
+  timer_.start();
 }
 
 MotorControl::~MotorControl() {
@@ -421,10 +424,16 @@ int MotorControl::send_by_bus_block(unsigned char ch, unsigned short id, unsigne
   switch (ch) {
     case 1:
       nbytes = write(can_s1, &frame, sizeof(frame));
+#ifdef PRINT_CAN_SEND
+      printf("Can bus 0 send command at time %f.\n", timer_.getMs());
+#endif  // PRINT_CAN_SEND
       bus1_rsv();
       break;
     default:
       nbytes = write(can_s0, &frame, sizeof(frame));
+#ifdef PRINT_CAN_SEND
+      printf("Can bus 0 send command at time %f.\n", timer_.getMs());
+#endif  // PRINT_CAN_SEND
       bus0_rsv();
       break;
   }
@@ -538,7 +547,6 @@ int MotorControl::bus0_rsv() {
   int nbytes0 = 0;
   if (is_inited) {
     nbytes0 = read(can_s0, &rsv_frame0, sizeof(rsv_frame0));
-
     if (nbytes0 > 0) {
       data_proc(0, &rsv_frame0);
       return 1;
@@ -688,12 +696,10 @@ void MotorControl::set_value(int idx, int mode, float value) {
       //   snd_value = value / motors[idx].ke;
       snd_value = value * motors[idx].direction / motors[idx].tau_ratio / motors[idx].ke;
       // if (id == 0) {
-      //   printf("%f %f %f\n", motors[idx].position_real, value,
-      //   motors[idx].current_real);
+      //   printf("%f %f %f\n", motors[idx].position_real, value, motors[idx].current_real);
       //   // printf("%f %f\n", send_value, motors[idx].current_real);
-      //   // printf("Can bus %d, send_tau: %f, send_curr: %f, real_curr: %f\n",
-      //   id, value, send_value,
-      //   //        motors[idx].current_real);
+      //   // printf("Can %d, send_tau: %f, send_curr: %f, real_curr: %f\n", id, value, send_value,
+      //   // motors[idx].current_real);
       // }
       break;
     case 1:  // Speed mode
