@@ -18,7 +18,8 @@
 
 namespace {
 const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.5~500
-const int kMotorCount = 1;         // 电机总数
+const int kMotorStart = 10;        // 电机开始的编号
+const int kMotorFinal = 11;        // 电机结束的编号（必须大于开始编号）
 const float kKp = 20.0;            // 伺服跟踪Kp
 const float kKd = 0.01;            // 伺服跟踪Kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
@@ -61,7 +62,7 @@ int main() {
   int send_iterval = 500 / kFrequency;
 
   m_c.init_bus();
-  for (int i = 0; i < kMotorCount; ++i) {
+  for (int i = kMotorStart; i < kMotorFinal; ++i) {
     m_c.set_en(i, true);
     std::cout << "id: " << i << " enabled" << std::endl;
   }
@@ -80,12 +81,12 @@ int main() {
 #ifndef POSTEST
   float fai_bias[12] = {0};
   for (int n = 0; n < 10; ++n) {
-    for (int i = 0; i < kMotorCount; ++i) {
+    for (int i = kMotorStart; i < kMotorFinal; ++i) {
       m_c.set_value(i, 0, 0.f);
     }
-    usleep(5000);
+    usleep(500);
   }
-  for (int i = 0; i < kMotorCount; ++i) {
+  for (int i = kMotorStart; i < kMotorFinal; ++i) {
     time_now = timer.getSeconds();
     m_c.motors[i].position_zero = m_c.motors[i].position_real;
     fai_bias[i] = -kSinOmega * time_now;
@@ -100,24 +101,24 @@ int main() {
     if (kWaveForm == 0) {
       int mod = time_now / kSquareCycle;
       if (mod % 2 == 0) {
-        for (int i = 0; i < kMotorCount; ++i) {
+        for (int i = kMotorStart; i < kMotorFinal; ++i) {
           set_cur[i] = -kSquareAmplitude;
         }
       } else {
-        for (int i = 0; i < kMotorCount; ++i) {
+        for (int i = kMotorStart; i < kMotorFinal; ++i) {
           set_cur[i] = kSquareAmplitude;
         }
       }
       // printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
     } else if (kWaveForm == 1) {
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
         set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
         set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
       printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
     } else if (kWaveForm == 2) {
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_cur[i] = kKCurrent * iteration;
         if (set_cur[i] > kMaxCurrent) {
           set_cur[i] = kMaxCurrent;
@@ -130,7 +131,7 @@ int main() {
 
 #ifdef POSTEST
     if (enable_send) {
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_value(i, 2, set_pos[i]);
       }
       printf("Now %6.4f, SetPos %2.6f rad, ReadPos %2.6f rad, ReadVel %2.6f, ReadCurr %2.6f\n", time_now,
@@ -141,7 +142,7 @@ int main() {
 
 #ifdef CURR_OPEN_TEST
     if (enable_send) {
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_value(i, 0, set_cur[i]);
       }
       printf("Now %6.4f, SetCurr %2.6f A, ReadCurr %2.6f A, ReadPos %2.6f, ReadVel %2.6f\n", time_now,
@@ -152,7 +153,7 @@ int main() {
 
 #ifdef CURR_CLOSE_TEST
     if (enable_send) {
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_cur[i] =
             kKp * (set_pos[i] - m_c.motors[i].position_real) + kKd * (set_vel[i] - 0.5 * m_c.motors[i].velocity_real);
         m_c.set_value(i, 0, set_cur[i]);
@@ -165,7 +166,7 @@ int main() {
 
     if (enable_send && kSaveData) {
       log << time_now << " ";
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         log << set_pos[i] << " " << m_c.motors[i].position_real << " " << set_vel[i] << " "
             << m_c.motors[i].velocity_real << " " << set_cur[i] << " " << m_c.motors[i].current_real << " ";
       }
@@ -175,7 +176,7 @@ int main() {
     if (stop_signal) {
       log.close();
       std::cout << std::endl;
-      for (int i = 0; i < kMotorCount; ++i) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_en(i, false);
         usleep(10);
         std::cout << "id: " << i << " disabled" << std::endl;
