@@ -8,13 +8,13 @@
 #include <fstream>
 #include <iostream>
 
-#define CURR_CLOSE_TEST  // 电流环'闭环'测试
-// #define CURR_OPEN_TEST  // 电流环'开环'测试
+// #define CURR_CLOSE_TEST  // 电流环'闭环'测试
+#define CURR_OPEN_TEST  // 电流环'开环'测试
 // #define POSTEST        // 位置环'开环'测试
 // #define USENONBLOCK    // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
 // #define PRINTTIMEOUT   // 开启后打印多少个Timeout接收到信号
 // #define SPLITSENDRECV  // 将接收与发送线程分离开
-#define PRINT_CAN_SEND
+// #define PRINT_CAN_SEND
 
 namespace {
 const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.5~500
@@ -24,13 +24,16 @@ const float kKd = 0.01;            // 伺服跟踪Kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
 const bool kSaveData = true;       // 是否保存测试数据
 
-const int kWaveForm = 1;              // 0使用方波信号，1使用正弦波信号
+const int kWaveForm = 2;              // 0使用方波信号，1使用正弦波信号，2使用单方向电流信号
 const double kSquareCycle = 1;        // 方波周期（s）
 const double kSquareAmplitude = 1.0;  // 方波幅值（A）
 const float kSinAmplitude = 2.0;      // sin幅值（A）
 const float kSinCycle = 0.5;          // sin周期（s）
 const float kSinOmega = 2.f * M_PI / kSinCycle;
 const int kMotorPrint = 0;
+
+const double kKCurrent = 1e-4;   // 斜坡电流的斜率
+const double kMaxCurrent = 3.0;  // 斜坡电流的最大值
 
 const float kGearRatio = 8.f;
 const float kDriverRatio = 2.f * M_PI / kGearRatio;
@@ -65,7 +68,7 @@ int main() {
   std::cout << "CAN communication is setup successfully." << std::endl
             << "WARNING: Make sure the motor is enabled." << std::endl
             << "Press Enter to continue..." << std::endl;
-  std::cin.ignore();
+  // std::cin.ignore();
 
 #ifdef SPLITSENDRECV
   m_c.init_recv_thread();
@@ -113,6 +116,13 @@ int main() {
         set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
       printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
+    } else if (kWaveForm == 2) {
+      for (int i = 0; i < kMotorCount; ++i) {
+        set_cur[i] = kKCurrent * iteration;
+        if (set_cur[i] > kMaxCurrent) {
+          set_cur[i] = kMaxCurrent;
+        }
+      }
     } else {
       printf("[Error] Undefined wave form!\n");
       return -1;
@@ -135,7 +145,7 @@ int main() {
         m_c.set_value(i, 0, set_cur[i]);
       }
       printf("Now %6.4f, SetCurr %2.6f A, ReadCurr %2.6f A, ReadPos %2.6f, ReadVel %2.6f\n", time_now,
-             set_pos[kMotorPrint], m_c.motors[kMotorPrint].current_real, m_c.motors[kMotorPrint].position_real,
+             set_cur[kMotorPrint], m_c.motors[kMotorPrint].current_real, m_c.motors[kMotorPrint].position_real,
              m_c.motors[kMotorPrint].velocity_real);
     }
 #endif  // CURR_OPEN_TEST
