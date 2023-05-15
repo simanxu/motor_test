@@ -8,33 +8,33 @@
 #include <fstream>
 #include <iostream>
 
-// #define CURR_CLOSE_TEST  // 电流环'闭环'测试
-#define CURR_OPEN_TEST  // 电流环'开环'测试
+#define CURR_CLOSE_TEST  // 电流环'闭环'测试
+// #define CURR_OPEN_TEST  // 电流环'开环'测试
 // #define POSTEST        // 位置环'开环'测试
-// #define USENONBLOCK    // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
+// #define USENONBLOCK  // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
 // #define PRINTTIMEOUT   // 开启后打印多少个Timeout接收到信号
 // #define SPLITSENDRECV  // 将接收与发送线程分离开
 // #define PRINT_CAN_SEND
 
 namespace {
 const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.5~500
-const int kMotorStart = 10;        // 电机开始的编号
-const int kMotorFinal = 11;        // 电机结束的编号（必须大于开始编号）
-const float kKp = 20.0;            // 伺服跟踪Kp
-const float kKd = 0.01;            // 伺服跟踪Kd
+const int kMotorStart = 0;         // 电机开始的编号
+const int kMotorFinal = 12;        // 电机结束的编号（必须大于开始编号）
+const float kKp = 20;              // 伺服跟踪Kp
+const float kKd = 0.005;           // 伺服跟踪Kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
 const bool kSaveData = true;       // 是否保存测试数据
 
-const int kWaveForm = 2;              // 0使用方波信号，1使用正弦波信号，2使用单方向电流信号
+const int kWaveForm = 1;              // 0使用方波信号，1使用正弦波信号，2使用单方向电流信号
 const double kSquareCycle = 1;        // 方波周期（s）
-const double kSquareAmplitude = 1.0;  // 方波幅值（A）
-const float kSinAmplitude = 2.0;      // sin幅值（A）
-const float kSinCycle = 0.5;          // sin周期（s）
+const double kSquareAmplitude = 2.0;  // 方波幅值（A）
+const float kSinAmplitude = 2;        // sin幅值（A）
+const float kSinCycle = 1;            // sin周期（s）
 const float kSinOmega = 2.f * M_PI / kSinCycle;
-const int kMotorPrint = 0;
+const int kMotorPrint = 1;
 
-const double kKCurrent = 1e-4;   // 斜坡电流的斜率
-const double kMaxCurrent = 3.0;  // 斜坡电流的最大值
+const double kKCurrent = 1e-6;  // 斜坡电流的斜率
+const double kMaxCurrent = 2;   // 斜坡电流的最大值
 
 const float kGearRatio = 8.f;
 const float kDriverRatio = 2.f * M_PI / kGearRatio;
@@ -80,10 +80,8 @@ int main() {
 
 #ifndef POSTEST
   float fai_bias[12] = {0};
-  for (int n = 0; n < 10; ++n) {
-    for (int i = kMotorStart; i < kMotorFinal; ++i) {
-      m_c.set_value(i, 0, 0.f);
-    }
+  for (int i = kMotorStart; i < kMotorFinal; ++i) {
+    m_c.set_value(i, 0, 0.f);
     usleep(500);
   }
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
@@ -116,7 +114,7 @@ int main() {
         set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
         set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
-      printf("Now %6.4f, SetCurr %2.6f\n", time_now, set_cur[0]);
+      // printf("Now %6.4f, %2.5f, SetCurr %2.6f\n", time_now, kSinAmplitude, set_cur[0]);
     } else if (kWaveForm == 2) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_cur[i] = kKCurrent * iteration;
@@ -232,54 +230,54 @@ MotorControl::MotorControl() {
     motors[i].ke = kTorqueCoefficient;
   }
 
-  // define motor position zero
-  // motors[0].direction = -1;
-  // motors[0].position_zero = 0.4227335;
+  // define motor position zeros
+  motors[0].direction = -1;
+  motors[0].position_zero = 0.090175;
 
-  // motors[1].direction = -1;
-  // motors[1].position_zero = -2.25485;
+  motors[1].direction = -1;
+  motors[1].position_zero = -2.474798;
 
-  // motors[2].pos_ratio = kDriverRatio / kKneeRatio;
-  // motors[2].vel_ratio = kDriverRatio / kKneeRatio;
-  // motors[2].tau_ratio = kGearRatio * kKneeRatio;
-  // motors[2].direction = -1;
-  // motors[2].position_zero = 2.468752;
+  motors[2].pos_ratio = kDriverRatio / kKneeRatio;
+  motors[2].vel_ratio = kDriverRatio / kKneeRatio;
+  motors[2].tau_ratio = kGearRatio * kKneeRatio;
+  motors[2].direction = -1;
+  motors[2].position_zero = 2.398147;
 
-  // motors[3].direction = -1;
-  // motors[3].position_zero = -0.053213;
+  motors[3].direction = -1;
+  motors[3].position_zero = 0.189506;
 
-  // motors[4].direction = 1;
-  // motors[4].position_zero = -2.86373;
+  motors[4].direction = 1;
+  motors[4].position_zero = -2.392916;
 
-  // motors[5].pos_ratio = kDriverRatio / kKneeRatio;
-  // motors[5].vel_ratio = kDriverRatio / kKneeRatio;
-  // motors[5].tau_ratio = kGearRatio * kKneeRatio;
-  // motors[5].direction = 1;
-  // motors[5].position_zero = 2.486871;
+  motors[5].pos_ratio = kDriverRatio / kKneeRatio;
+  motors[5].vel_ratio = kDriverRatio / kKneeRatio;
+  motors[5].tau_ratio = kGearRatio * kKneeRatio;
+  motors[5].direction = 1;
+  motors[5].position_zero = 2.785435;
 
-  // motors[6].direction = 1;
-  // motors[6].position_zero = 0.039167;
+  motors[6].direction = 1;
+  motors[6].position_zero = 0.4896335;
 
-  // motors[7].direction = -1;
-  // motors[7].position_zero = -2.45351;
+  motors[7].direction = -1;
+  motors[7].position_zero = -2.454663;
 
-  // motors[8].pos_ratio = kDriverRatio / kKneeRatio;
-  // motors[8].vel_ratio = kDriverRatio / kKneeRatio;
-  // motors[8].tau_ratio = kGearRatio * kKneeRatio;
-  // motors[8].direction = -1;
-  // motors[8].position_zero = 2.5624647;
+  motors[8].pos_ratio = kDriverRatio / kKneeRatio;
+  motors[8].vel_ratio = kDriverRatio / kKneeRatio;
+  motors[8].tau_ratio = kGearRatio * kKneeRatio;
+  motors[8].direction = -1;
+  motors[8].position_zero = 2.882577;
 
-  // motors[9].direction = 1;
-  // motors[9].position_zero = -0.512834;
+  motors[9].direction = 1;
+  motors[9].position_zero = -0.261368;
 
-  // motors[10].direction = 1;
-  // motors[10].position_zero = -2.4107;
+  motors[10].direction = 1;
+  motors[10].position_zero = -2.876054;
 
-  // motors[11].pos_ratio = kDriverRatio / kKneeRatio;
-  // motors[11].vel_ratio = kDriverRatio / kKneeRatio;
-  // motors[11].tau_ratio = kGearRatio * kKneeRatio;
-  // motors[11].direction = 1;
-  // motors[11].position_zero = 2.876895;
+  motors[11].pos_ratio = kDriverRatio / kKneeRatio;
+  motors[11].vel_ratio = kDriverRatio / kKneeRatio;
+  motors[11].tau_ratio = kGearRatio * kKneeRatio;
+  motors[11].direction = 1;
+  motors[11].position_zero = 2.752557;
 
   memset(&rsv_frame0, 0, sizeof(struct can_frame));
   memset(&rsv_frame1, 0, sizeof(struct can_frame));
@@ -624,21 +622,21 @@ void MotorControl::data_proc(unsigned char ch, struct can_frame* frame) {
     motors[idx].ch = ch;
     motors[idx].rsv_cnt++;
     switch (cmd) {
-      case 0x0C:  // position value
+      case 0x0F:  // position value
         tmpfloat = *(float*)frame->data;
         motors[idx].position_real = tmpfloat * motors[idx].pos_ratio - motors[idx].position_zero;
         break;
-      case 0x0D:  // speed value
+      case 0x10:  // speed value
         tmpfloat = *(float*)frame->data;
         motors[idx].velocity_real = tmpfloat;
         break;
-      case 0x0E:  // current value
+      case 0x11:  // current value
         tmpfloat = *(float*)frame->data;
         motors[idx].current_real = tmpfloat * motors[idx].ke;
         break;
-      case 0x0B:
-      case 0x0A:
-      case 0x09:
+      case 0x0E:
+      case 0x0D:
+      case 0x0C:
         if (8 == frame->can_dlc) {
           tmpu16 = frame->data[0] + (unsigned short)frame->data[1] * 256;
           tmp16 = tmpu16;
@@ -647,8 +645,7 @@ void MotorControl::data_proc(unsigned char ch, struct can_frame* frame) {
 
           tmpu16 = frame->data[2] + (unsigned short)frame->data[3] * 256;
           tmp16 = tmpu16;
-          motors[idx].velocity_real = (float)tmp16 * 0.1f * motors[idx].direction * motors[idx].vel_ratio;
-          // motors[idx].velocity_real *= 0.1;
+          motors[idx].velocity_real = 0.5 * (float)tmp16 * 0.1f * motors[idx].direction * motors[idx].vel_ratio;
 
           tmpfloat = *(float*)(frame->data + 4);
           motors[idx].position_real =
@@ -681,13 +678,13 @@ void MotorControl::get_var(int idx, int mode) {
   unsigned short cmd;
   switch (mode) {
     case 0:
-      cmd = 0x0E;
+      cmd = 0x11;
       break;
     case 1:
-      cmd = 0x0D;
+      cmd = 0x10;
       break;
     case 2:
-      cmd = 0x0C;
+      cmd = 0x0F;
       break;
   }
   id += cmd << 4;
@@ -706,7 +703,7 @@ void MotorControl::set_value(int idx, int mode, float value) {
 
   switch (mode) {
     case 0:  // Current mode
-      cmd = 0x0B;
+      cmd = 0x0E;
       //   snd_value = value / motors[idx].ke;
       snd_value = value * motors[idx].direction / motors[idx].tau_ratio / motors[idx].ke;
       // if (id == 0) {
@@ -717,12 +714,12 @@ void MotorControl::set_value(int idx, int mode, float value) {
       // }
       break;
     case 1:  // Speed mode
-      cmd = 0x0A;
+      cmd = 0x0D;
       //   snd_value = value;
       snd_value = value * motors[idx].direction / motors[idx].vel_ratio;
       break;
     case 2:  // Position mode
-      cmd = 0x09;
+      cmd = 0x0C;
       //   snd_value = (value + motors[idx].position_zero) /
       //   motors[idx].pos_ratio;
       snd_value = (value - motors[idx].position_zero) / motors[idx].direction / motors[idx].pos_ratio;
