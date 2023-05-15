@@ -4,3 +4,4 @@ build/
 *.jpg
 *.jpeg
 *.txt
+plot/data.txt
