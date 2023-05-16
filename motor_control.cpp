@@ -153,7 +153,7 @@ int main() {
     if (enable_send) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_cur[i] =
-            kKp * (set_pos[i] - m_c.motors[i].position_real) + kKd * (set_vel[i] - 0.5 * m_c.motors[i].velocity_real);
+            kKp * (set_pos[i] - m_c.motors[i].position_real) + kKd * (set_vel[i] - m_c.motors[i].velocity_real);
         m_c.set_value(i, 0, set_cur[i]);
       }
       printf("Now %6.4f, SetPos %2.6f, ReadPos %2.6f, SetVel %2.6f, ReadVel %2.6f, SetCurr %2.6f, ReadCurr %2.6f\n",
