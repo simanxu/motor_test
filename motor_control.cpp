@@ -84,9 +84,6 @@ int main() {
   m_c.init_recv_thread();
 #endif  // SPLITSENDRECV
 
-  Timer timer;
-  timer.start();
-
 #ifndef POSTEST
   float fai_bias[12] = {0};
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
@@ -94,12 +91,15 @@ int main() {
     usleep(500);
   }
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
-    time_now = timer.getSeconds();
     m_c.motors[i].position_zero = m_c.motors[i].position_real;
-    fai_bias[i] = -kSinOmega * time_now;
-    // std::cout << "id: " << i << " fai_bias[i]: " << fai_bias[i] << std::endl;
+    float sin_fai = m_c.motors[i].position_real / kSinAmplitude;
+    fai_bias[i] = std::asin(sin_fai);
+    // std::cout << "id: " << i << " fai_bias: " << fai_bias[i] << std::endl;
   }
 #endif  // POSTEST
+
+  Timer timer;
+  timer.start();
 
   while (true) {
     time_now = timer.getSeconds();
