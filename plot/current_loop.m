@@ -1,6 +1,10 @@
-% author = 'xujiafeng';
-% data = '2022.11.17';
-% license = 'GPL';
+%
+% @author [xujiafeng]
+% @email [2235797879@qq.com]
+% @create date 2023-06-15 14:31:12
+% @modify date 2023-06-15 14:31:12
+% @desc [motor control test porgram]
+%
 clear;
 clc;
 close all;

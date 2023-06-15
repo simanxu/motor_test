@@ -1,3 +1,10 @@
+/**
+ * @author [xujiafeng]
+ * @email [2235797879@qq.com]
+ * @create date 2023-06-15 14:31:12
+ * @modify date 2023-06-15 14:31:12
+ * @desc [motor control test porgram]
+ */
 #ifndef TIMER_CONTROL_H_
 #define TIMER_CONTROL_H_
 
@@ -9,7 +16,7 @@
  * Timer for measuring time elapsed with clock_monotonic
  */
 class Timer {
-public:
+ public:
   /*!
    * Construct and start timer
    */
@@ -36,8 +43,7 @@ public:
   int64_t getNs() {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    return (int64_t)(now.tv_nsec - _startTime.tv_nsec) +
-           1000000000 * (now.tv_sec - _startTime.tv_sec);
+    return (int64_t)(now.tv_nsec - _startTime.tv_nsec) + 1000000000 * (now.tv_sec - _startTime.tv_sec);
   }
 
   /*!
@@ -48,4 +54,4 @@ public:
   struct timespec _startTime;
 };
 
-#endif // TIMER_CONTROL_H_
+#endif  // TIMER_CONTROL_H_
