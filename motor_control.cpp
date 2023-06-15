@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <algorithm>
 #include <csignal>
 #include <fstream>
 #include <iostream>
