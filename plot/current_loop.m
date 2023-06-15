@@ -12,12 +12,25 @@ can_id = 1;
 
 data = load(filename);
 t = data(:,1) - data(1,1);
+t_set = data(:, end-1);
+t_get = data(:, end);
 psid = can_id * 6 - 4;
 prid = can_id * 6 - 3;
 vsid = can_id * 6 - 2;
 vrid = can_id * 6 - 1;
 csid = can_id * 6;
 crid = can_id * 6 + 1;
+
+figure;
+hold on;
+box on;
+grid on;
+plot(t, t,'r','Linewidth',3.0)
+plot(t, t_set,'b','Linewidth',3.0)
+plot(t, t_get,'g','Linewidth',3.0)
+xlabel('Time (s)');
+ylabel('Different Time (s)');
+h = legend('Time Record Data','Time Set Value','Time Get Reading','location','northeast');
 
 in_one_fig = true;
 figure('units','normalized','position',[0.1,0.1,0.8,0.35])
@@ -45,7 +58,7 @@ hold on;
 box on;
 grid on;
 plot(t, data(:,vsid),'r','Linewidth',3.0)
-plot(t, 0.1*data(:,vrid),'b','Linewidth',3.0)
+plot(t, data(:,vrid),'b','Linewidth',3.0)
 xlabel('Time (s)');
 ylabel('Velocity (rad/s)');
 % h = legend('command','read','location','northeast');
