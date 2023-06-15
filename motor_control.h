@@ -29,6 +29,8 @@ class MotorControl {
   bool is_not_rsv0;
   bool is_not_rsv1;
   Timer timer_;
+  double time_set_;
+  double time_get_;
 
   std::thread can_recv_thread_;
 
