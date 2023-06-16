@@ -93,8 +93,8 @@ int main() {
   }
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
     m_c.motors[i].position_zero = m_c.motors[i].position_real;
-    float sin_fai = m_c.motors[i].position_real / kSinAmplitude;
-    fai_bias[i] = std::asin(sin_fai);
+    // float sin_fai = m_c.motors[i].position_real / kSinAmplitude;
+    // fai_bias[i] = std::asin(sin_fai);
     // std::cout << "id: " << i << " fai_bias: " << fai_bias[i] << std::endl;
   }
 #endif  // POSTEST
@@ -121,7 +121,8 @@ int main() {
     } else if (kWaveForm == 1) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
-        set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
+        // set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
+        set_vel[i] = 1.f;
         set_cur[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
       // printf("Now %6.4f, %2.5f, SetCurr %2.6f\n", time_now, kSinAmplitude, set_cur[0]);
