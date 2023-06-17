@@ -62,17 +62,17 @@ class MotorControl {
     unsigned char opmode;  // operate mode
     unsigned char statu;   // motor status
     int direction;         // 电机转向*模型方向
-    float pos_ratio;       // 位置减速比
-    float vel_ratio;       // 速度减速比
-    float tau_ratio;       // 力矩减速比
-    float position_set;    // 位置设定值
-    float position_real;   // 位置真实值
+    float pos_ratio;       // 位置减速比, driver to joint
+    float vel_ratio;       // 速度减速比, driver to joint
+    float tau_ratio;       // 力矩减速比, driver to joint
+    float position_set;    // 位置设定值, rad
+    float position_real;   // 位置真实值, rad
     float position_zero;   // 位置零位
-    float velocity_set;    // 速度设定值
-    float velocity_real;   // 速度真实值
-    float ke;              // 力矩系数 Nm/A
-    float current_set;     // 电流设定值
-    float current_real;    // 电流实际值
+    float velocity_set;    // 速度设定值, rad/s
+    float velocity_real;   // 速度真实值, rad/s
+    float ke;              // 力矩系数, Nm/A
+    float current_set;     // 力矩设定值, Nm
+    float torque_real;     // 力矩实际值, Nm
     int rsv_cnt;
   };
 
