@@ -46,8 +46,8 @@ const double kMaxCurrent = 2;   // 斜坡电流的最大值
 
 const float kGearRatio = 8.f;
 const float kTorqueCoefficient = 0.21f;                     // Nm/A
-const float kPosDri2Jnt = 1.f / kGearRatio;                 // 1 rad -> 1/8 rad
-const float kVelDri2Jnt = 1.f / kGearRatio / (2.f * M_PI);  // 1 rps -> 1/(2pi) rad/s -> 1/(2pi)/8 rad/s
+const float kPosDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 r -> 2pi rad -> 2pi/8 rad
+const float kVelDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 rps -> 2pi rad/s -> 2pi/8 rad/s
 const float kTauDri2Jnt = kGearRatio * kTorqueCoefficient;  // 1 A -> 8 A -> 8*ke Nm
 const float kKneeRatio = 1.f / 0.72266f;
 const float kCurrentLimit = 10.f;
