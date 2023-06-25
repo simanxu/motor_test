@@ -1,19 +1,7 @@
 # motor_test
 
-ratio = 1/8
-
-pos_output = pos_motor * ratio
-
-vel = (pos_{t} - pos_{t-1}) / dt
-
-vel_output = (pos_output_{t} - pos_output{t-1}) / dt
-           = (pos_motor_{t} * ratio - pos_motor{t-1} * ratio) / dt
-           = ratio * (pos_motor_{t} - pos_motor{t-1}) / dt
-           = ratio * vel_motor
-
-cur_output = tau_output / ke
-           = (kp * pos_output_error + kd * vel_output_error + tau_ff_output) / ke
-           = (kp * pos_motor_error * ratio + kd * vel_motor_error * ratio + tau_ff_output) / ke
-           = (kp * pos_motor_error * ratio + kd * vel_motor_error * ratio + tau_ff_motor * ratio) / ke
-           = ratio * (kp * pos_motor_error + kd * vel_motor_error + tau_ff_motor) / ke
-           = ratio * tau_motor / ke
+const float kGearRatio = 8.f;
+const float kTorqueCoefficient = 0.15f;                     // Nm/A
+const float kPosDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 r -> 2pi rad -> 2pi/8 rad
+const float kVelDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 rps -> 2pi rad/s -> 2pi/8 rad/s
+const float kTauDri2Jnt = kGearRatio * kTorqueCoefficient;  // 1 A -> 8 A -> 8*ke Nm

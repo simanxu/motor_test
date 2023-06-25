@@ -25,27 +25,26 @@
 // #define PRINT_CAN_SEND
 
 namespace {
-const float kFrequency = 500;      // 控制频率(Hz)，数值允许0.1~500
-const int kMotorStart = 0;         // 电机开始的编号
-const int kMotorFinal = 12;        // 电机结束的编号（必须大于开始编号）
-const float kKp = 50;              // 伺服跟踪Kp
-const float kKd = 0.125;           // 伺服跟踪Kd
+const float kFrequency = 500;      // control frequency (Hz)
+const int kMotorStart = 0;         // the first index of the motor
+const int kMotorFinal = 12;        // the ended index of the motor
+const int kMotorPrint = 1;         // which motor will be printed
+const float kKp = 50;              // servo kp
+const float kKd = 0.125;           // servo kd
 const int kCanRecvTimeout = 5000;  // 非阻塞式通讯模式下，接收超时的次数（丢包严重则改大此数）
-const bool kSaveData = true;       // 是否保存测试数据
+const bool kSaveData = true;       // enable save test data
 
-const int kWaveForm = 1;              // 0使用方波信号，1使用正弦波信号，2使用单方向电流信号
-const double kSquareCycle = 1;        // 方波周期（s）
-const double kSquareAmplitude = 2.0;  // 方波幅值（A）
-const float kSinAmplitude = 2;        // sin幅值（A）
-const float kSinCycle = 1;            // sin周期（s）
-const float kSinOmega = 2.f * M_PI / kSinCycle;
-const int kMotorPrint = 1;
+const int kWaveForm = 1;                         // 0 square wave, 1 sine wave, 2 ramp current
+const double kSquareCycle = 1;                   // period of the square wave (S)
+const double kSquareAmplitude = 2.0;             // amplitude of the square wave (A)
+const float kSinCycle = 1;                       // period of the sin wave (S)
+const float kSinAmplitude = 2;                   // amplitude of the sin wave (A)
+const float kSinOmega = 2.f * M_PI / kSinCycle;  // angular frequency of the sin wave (1/S)
+const double kKCurrent = 1e-3;                   // the slope of the ramp current
+const double kMaxCurrent = 2;                    // the maximum of the ramp current (A)
 
-const double kKCurrent = 1e-3;  // 斜坡电流的斜率
-const double kMaxCurrent = 2;   // 斜坡电流的最大值
-
-const float kGearRatio = 8.f;
-const float kTorqueCoefficient = 0.21f;                     // Nm/A
+const float kGearRatio = 8.f;                               // gear ratio
+const float kTorqueCoefficient = 0.15f;                     // Nm/A
 const float kPosDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 r -> 2pi rad -> 2pi/8 rad
 const float kVelDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 rps -> 2pi rad/s -> 2pi/8 rad/s
 const float kTauDri2Jnt = kGearRatio * kTorqueCoefficient;  // 1 A -> 8 A -> 8*ke Nm
