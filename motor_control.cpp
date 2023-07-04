@@ -44,12 +44,12 @@ const double kKCurrent = 1e-3;                   // the slope of the ramp curren
 const double kMaxCurrent = 2;                    // the maximum of the ramp current (A)
 
 const float kGearRatio = 8.f;                               // gear ratio
-const float kTorqueCoefficient = 0.15f;                     // Nm/A
+const float kTorqueCoefficient = 0.12f;                     // Nm/A
 const float kPosDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 r -> 2pi rad -> 2pi/8 rad
 const float kVelDri2Jnt = 2.f * M_PI / kGearRatio;          // 1 rps -> 2pi rad/s -> 2pi/8 rad/s
 const float kTauDri2Jnt = kGearRatio * kTorqueCoefficient;  // 1 A -> 8 A -> 8*ke Nm
 const float kKneeRatio = 1.f / 0.72266f;
-const float kCurrentLimit = 10.f;
+const float kCurrentLimit = 15.f;
 
 volatile std::sig_atomic_t stop_signal;
 }  // namespace
