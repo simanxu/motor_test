@@ -16,12 +16,12 @@
 #include <fstream>
 #include <iostream>
 
-#define CURR_CLOSE_TEST  // 电流环'闭环'测试
-// #define CURR_OPEN_TEST  // 电流环'开环'测试
-// #define POSTEST        // 位置环'开环'测试
-// #define USENONBLOCK  // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
-// #define PRINTTIMEOUT   // 开启后打印多少个Timeout接收到信号
-// #define SPLITSENDRECV  // 将接收与发送线程分离开
+// #define CURR_CLOSE_TEST  // 电流环'闭环'测试
+// #define CURR_OPEN_TEST   // 电流环'开环'测试
+// #define POS_OPEN_TEST  // 位置环'开环'测试
+#define VEL_OPEN_TEST  // 速度环'开环'测试
+// #define USENONBLOCK      // 开启后使用非阻塞式通讯，关闭后使用阻塞式通讯
+// #define PRINTTIMEOUT     // 开启后打印多少个Timeout接收到信号
 // #define PRINT_CAN_SEND
 
 namespace {
@@ -64,30 +64,21 @@ int main() {
   float set_pos[12] = {0};
   float set_vel[12] = {0};
   float set_tau[12] = {0};
+  float fai_bias[12] = {0};
 
   int iteration = 0;
   double time_now = 0.0;
   bool enable_send = false;
   unsigned int sleep_count = 1820;
   int send_iterval = 500 / kFrequency;
-  std::cout << "[CYCLE] Count of send_iterval is: " << send_iterval << std::endl;
+  fprintf(stdout, "[CYCLE] Count of send_iterval is %d.\n", send_iterval);
 
   m_c.init_bus();
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
     m_c.set_en(i, true);
-    std::cout << "motor id: " << i << " has send enabled signal." << std::endl;
+    fprintf(stdout, "[MOTOR] Motor id %d has send enabled signal.\n", i);
   }
-  // std::cout << "CAN communication is setup successfully." << std::endl
-  //           << "WARNING: Make sure the motor is enabled." << std::endl
-  //           << "Press Enter to continue..." << std::endl;
-  // std::cin.ignore();
 
-#ifdef SPLITSENDRECV
-  m_c.init_recv_thread();
-#endif  // SPLITSENDRECV
-
-#ifndef POSTEST
-  float fai_bias[12] = {0};
   for (int i = kMotorStart; i < kMotorFinal; ++i) {
     m_c.set_value(i, 0, 0.f);
     usleep(500);
@@ -96,9 +87,8 @@ int main() {
     m_c.motors[i].position_zero = -m_c.motors[i].position_real;
     // float sin_fai = m_c.motors[i].position_real / kSinAmplitude;
     // fai_bias[i] = std::asin(sin_fai);
-    // std::cout << "id: " << i << " fai_bias: " << fai_bias[i] << std::endl;
+    fprintf(stdout, "[MOTOR] Motor id %d, fai bias is %2.4f.\n", i, fai_bias[i]);
   }
-#endif  // POSTEST
 
   Timer timer;
   timer.start();
@@ -118,14 +108,14 @@ int main() {
           set_tau[i] = kSquareAmplitude;
         }
       }
-      // printf("Now %6.4f, SetTau %2.6f\n", time_now, set_tau[0]);
+      // printf("Now %6.4f, SetTau %2.6f Nm.\n", time_now, set_tau[kMotorPrint]);
     } else if (kWaveForm == 1) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_pos[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
         set_vel[i] = kSinAmplitude * kSinOmega * std::cos(kSinOmega * time_now + fai_bias[i]);
         set_tau[i] = kSinAmplitude * std::sin(kSinOmega * time_now + fai_bias[i]);
       }
-      // printf("Now %6.4f, %2.5f, SetTau %2.6f\n", time_now, kSinAmplitude, set_tau[0]);
+      // printf("Now %6.4f, SetTau %2.6f Nm.\n", time_now, set_tau[kMotorPrint]);
     } else if (kWaveForm == 2) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         set_tau[i] = kKCurrent * iteration;
@@ -133,33 +123,45 @@ int main() {
           set_tau[i] = kMaxCurrent;
         }
       }
+      // printf("Now %6.4f, SetTau %2.6f Nm.\n", time_now, set_tau[kMotorPrint]);
     } else {
       printf("[Error] Undefined wave form!\n");
       return -1;
     }
 
-#ifdef POSTEST
+#ifdef POS_OPEN_TEST
     if (enable_send) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_value(i, 2, set_pos[i]);
       }
       printf(
-          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetPos %2.6f rad, ReadPos %2.6f rad, ReadVel %2.6f, ReadCurr "
-          "%2.6f\n",
+          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetPos %2.6f rad, ReadPos %2.6f rad, ReadVel %2.6f rad/s, ReadTau "
+          "%2.6f Nm.\n",
           time_now, m_c.time_set_, m_c.time_get_, set_pos[kMotorPrint], m_c.motors[kMotorPrint].position_real,
           m_c.motors[kMotorPrint].velocity_real, m_c.motors[kMotorPrint].torque_real);
     }
-#endif  // POSTEST
+#endif  // POS_OPEN_TEST
+
+#ifdef VEL_OPEN_TEST
+    if (enable_send) {
+      for (int i = kMotorStart; i < kMotorFinal; ++i) {
+        m_c.set_value(i, 1, set_vel[i]);
+      }
+      printf(
+          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, ReadPos %2.6f rad, SetPos %2.6f rad/s, ReadVel %2.6f rad/s, "
+          "ReadTau %2.6f Nm.\n",
+          time_now, m_c.time_set_, m_c.time_get_, m_c.motors[kMotorPrint].position_real, set_vel[kMotorPrint],
+          m_c.motors[kMotorPrint].velocity_real, m_c.motors[kMotorPrint].torque_real);
+    }
+#endif  // VEL_OPEN_TEST
 
 #ifdef CURR_OPEN_TEST
     if (enable_send) {
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_value(i, 0, set_tau[i]);
       }
-      printf(
-          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetTau %2.6f A, ReadCurr %2.6f A, ReadPos %2.6f, ReadVel %2.6f\n",
-          time_now, m_c.time_set_, m_c.time_get_, set_tau[kMotorPrint], m_c.motors[kMotorPrint].torque_real,
-          m_c.motors[kMotorPrint].position_real, m_c.motors[kMotorPrint].velocity_real);
+      printf("Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetTau %2.6f Nm, ReadTau %2.6f Nm.\n", time_now, m_c.time_set_,
+             m_c.time_get_, set_tau[kMotorPrint], m_c.motors[kMotorPrint].torque_real);
     }
 #endif  // CURR_OPEN_TEST
 
@@ -171,8 +173,8 @@ int main() {
         m_c.set_value(i, 0, set_tau[i]);
       }
       printf(
-          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetPos %2.6f, ReadPos %2.6f, SetVel %2.6f, ReadVel %2.6f, SetTau "
-          "%2.6f, ReadTau %2.6f\n",
+          "Now %6.4f, SetTime %2.6f, GetTime %2.6f, SetPos %2.6f rad, ReadPos %2.6f rad, SetVel %2.6f rad/s, ReadVel "
+          "%2.6f rad/s, SetTau %2.6f Nm, ReadTau %2.6f Nm\n",
           time_now, m_c.time_set_, m_c.time_get_, set_pos[kMotorPrint], m_c.motors[kMotorPrint].position_real,
           set_vel[kMotorPrint], m_c.motors[kMotorPrint].velocity_real, set_tau[kMotorPrint],
           m_c.motors[kMotorPrint].torque_real);
@@ -190,11 +192,10 @@ int main() {
 
     if (stop_signal) {
       log.close();
-      std::cout << std::endl;
       for (int i = kMotorStart; i < kMotorFinal; ++i) {
         m_c.set_en(i, false);
         usleep(10);
-        std::cout << "motor id: " << i << " has send disabled signal." << std::endl;
+        fprintf(stdout, "[MOTOR] Motor id %d has send disabled signal.\n", i);
       }
       m_c.de_init_bus();
       return 0;
@@ -304,12 +305,7 @@ MotorControl::MotorControl() {
   time_set_ = 0.0;
 }
 
-MotorControl::~MotorControl() {
-  de_init_bus();
-  if (can_recv_thread_.joinable()) {
-    can_recv_thread_.join();
-  }
-}
+MotorControl::~MotorControl() { de_init_bus(); }
 
 int MotorControl::init_bus() {
   system("sudo ip link set can0 up type can bitrate 1000000");
@@ -378,13 +374,6 @@ int MotorControl::init_bus() {
   return 0;
 }
 
-void MotorControl::init_recv_thread() {
-  can_recv_thread_ = std::thread(&MotorControl::RecvMotorStatus, this);
-  can_recv_thread_.detach();
-}
-
-void MotorControl::send_loop() {}
-
 int MotorControl::send_by_bus(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len) {
   int ii;
   struct can_frame frame;
@@ -425,23 +414,6 @@ int MotorControl::send_by_bus(unsigned char ch, unsigned short id) {
   if (nbytes != sizeof(frame)) return 1;
 
   return 0;
-}
-
-void MotorControl::RecvMotorStatus() {
-  while (is_inited) {
-    // printf("Is running RecvMotorStatus\n");
-    int nbytes_x = 0;
-    nbytes_x = read(can_s0, &rsv_frame0, sizeof(rsv_frame0));
-    if (nbytes_x > 0) {
-      data_proc(0, &rsv_frame0);
-    }
-
-    nbytes_x = 0;
-    nbytes_x = read(can_s1, &rsv_frame1, sizeof(rsv_frame1));
-    if (nbytes_x > 0) {
-      data_proc(1, &rsv_frame1);
-    }
-  }
 }
 
 int MotorControl::send_by_bus_block(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len) {
@@ -644,19 +616,22 @@ void MotorControl::data_proc(unsigned char ch, struct can_frame* frame) {
     motors[idx].ch = ch;
     motors[idx].rsv_cnt++;
     switch (cmd) {
-      case 0x0C:
+      case 0x0C: {
         tmpfloat = *(float*)frame->data;
         motors[idx].position_real =
             tmpfloat * motors[idx].direction * motors[idx].pos_ratio + motors[idx].position_zero;
         break;
-      case 0x0D:
+      }
+      case 0x0D: {
         tmpfloat = *(float*)frame->data;
         motors[idx].velocity_real = tmpfloat * motors[idx].direction * motors[idx].vel_ratio;
         break;
-      case 0x0E:
+      }
+      case 0x0E: {
         tmpfloat = *(float*)frame->data;
         motors[idx].torque_real = tmpfloat * motors[idx].direction * motors[idx].tau_ratio;
         break;
+      }
       case 0x0B:
       case 0x0A:
       case 0x09:
@@ -756,17 +731,9 @@ void MotorControl::set_value(int idx, int mode, float value) {
   id += cmd << 4;
 
 #ifdef USENONBLOCK
-#  ifdef SPLITSENDRECV
-  send_by_bus(motors[idx].ch, id, tx_buff, 4);
-#  else
   send_by_bus_nonblock(motors[idx].ch, id, tx_buff, 4);
-#  endif
 #else
-#  ifdef SPLITSENDRECV
-  send_by_bus(motors[idx].ch, id, tx_buff, 4);
-#  else
   send_by_bus_block(motors[idx].ch, id, tx_buff, 4);
-#  endif
 #endif
 }
 

@@ -39,11 +39,7 @@ class MotorControl {
   double time_set_;
   double time_get_;
 
-  std::thread can_recv_thread_;
-
-  void RecvMotorStatus();
   int init_bus();
-  void init_recv_thread();
   int send_by_bus(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len);
   int send_by_bus(unsigned char ch, unsigned short id);
   int send_by_bus_block(unsigned char ch, unsigned short id, unsigned char* data, unsigned char len);
@@ -53,7 +49,7 @@ class MotorControl {
   void bus_rsv();
   int bus0_rsv();
   int bus1_rsv();
-  int de_init_bus();  //
+  int de_init_bus();
   void data_proc(unsigned char ch, struct can_frame* frame);
 
   struct MOTOR_VAR {
@@ -122,7 +118,6 @@ class MotorControl {
   void set_value(int idx, int mode, float value);
   void motor_cmd(int idx, int mode, int can_cmd, float value);
   void get_var(int idx, int mode);
-  void send_loop();
 };
 
 #endif  // MOTOR_CONTROL_H_
