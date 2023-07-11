@@ -51,6 +51,8 @@ const float kTauDri2Jnt = kGearRatio * kTorqueCoefficient;  // 1 A -> 8 A -> 8*k
 const float kKneeRatio = 1.f / 0.72266f;
 const float kCurrentLimit = 15.f;
 
+const float kDiffVelLimit = 10.f;
+
 volatile std::sig_atomic_t stop_signal;
 }  // namespace
 
@@ -644,7 +646,10 @@ void MotorControl::data_proc(unsigned char ch, struct can_frame* frame) {
           // speed unit returned from driver is [rps] - [rad/s]
           tmpu16 = frame->data[2] + (unsigned short)frame->data[3] * 256;
           tmp16 = tmpu16;
-          motors[idx].velocity_real = (float)tmp16 * 0.01f * motors[idx].direction * motors[idx].vel_ratio;
+          float vel_curr = (float)tmp16 * 0.01f * motors[idx].direction * motors[idx].vel_ratio;
+          if (std::abs(vel_curr - motors[idx].velocity_real) < kDiffVelLimit) {
+            motors[idx].velocity_real = vel_curr;
+          }
 
           // position unit returned from driver is [rad] - [rad]
           tmpfloat = *(float*)(frame->data + 4);
