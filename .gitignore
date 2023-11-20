@@ -10,10 +10,9 @@ CMakeCache*
 .cache/
 build/
 __pycache__/
-build/
-.vscode/
 *.bmp
 *.jpg
+*.png
 *.jpeg
 *.txt
 plot/data.txt
