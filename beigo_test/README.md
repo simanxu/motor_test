@@ -1,4 +1,4 @@
-# Motor test
+# Beigo test
 
 # Derive const parameters releated to motor ratio
 ```shell
