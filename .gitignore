@@ -1,3 +1,15 @@
+*.o
+*.gcda
+*.gcno
+*/bin/
+*/build/
+CMakeFiles/
+CMakeCache*
+.vscode/
+.idea/
+.cache/
+build/
+__pycache__/
 build/
 .vscode/
 *.bmp

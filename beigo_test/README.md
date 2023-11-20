@@ -1,4 +1,4 @@
-# Motor testing procedures for different drives
+# Motor test
 
 # Derive const parameters releated to motor ratio
 ```shell
