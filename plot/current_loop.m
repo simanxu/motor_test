@@ -11,7 +11,8 @@ clc;
 close all;
 
 % 文件名
-filename = 'data.txt';
+% filename = './beigo_test/data.txt';
+filename = './cyber_test/data/data.txt';
 % 要画的电机编号: 1,2,3...11,12
 can_id = 1;
 

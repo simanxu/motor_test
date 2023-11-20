@@ -43,7 +43,7 @@ def position_control(t, amplitude = 2.0, period = 1.0):
     set_angle(ID, pos, vel)
     pos_vel = get_state(ID)
     vol_cur = get_volcur(ID)
-    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}\n".format(pos, pos_vel[0], vel, pos_vel[1], zcmd, vol_cur[1])
+    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}\n".format(t, pos, pos_vel[0], vel, pos_vel[1], zcmd, vol_cur[1])
     file.write(line)
 
 def velocity_control(t, amplitude = 2.0, period = 1.0):
@@ -58,7 +58,7 @@ def velocity_control(t, amplitude = 2.0, period = 1.0):
     set_speed(ID, vel)
     pos_vel = get_state(ID)
     vol_cur = get_volcur(ID)
-    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(pos, pos_vel[0], vel, pos_vel[1], zcmd, vol_cur[1])
+    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(t, pos, pos_vel[0], vel, pos_vel[1], zcmd, vol_cur[1])
     file.write(line)
 
 
@@ -73,7 +73,7 @@ def current_control(t, amplitude = 2.0, period = 1.0):
     set_torque(ID, cur)
     pos_vel = get_state(ID)
     vol_cur = get_volcur(ID)
-    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(zcmd, pos_vel[0], zcmd, pos_vel[1], zcmd, vol_cur[1])
+    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(t, zcmd, pos_vel[0], zcmd, pos_vel[1], zcmd, vol_cur[1])
     file.write(line)
 
 
@@ -90,7 +90,7 @@ def motion_control(t, amplitude = 2.0, period = 1.0, kp = 10, kd = 0.1):
     vol_cur = get_volcur(ID)
     tff = kp * (pos - pos_vel[0]) + kd * (vel - pos_vel[1])
     impedance_control(ID, pos, vel, tff=tff, kp=kp, kd=kd)
-    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(pos, pos_vel[0], vel, pos_vel[1], tff, vol_cur[1])
+    line = "{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}".format(t, pos, pos_vel[0], vel, pos_vel[1], tff, vol_cur[1])
     file.write(line)
 
 
