@@ -766,7 +766,7 @@ def get_state(id_num=127):
 
     """
     global READ_FLAG, motor_state
-    pos_vel = [0, 0]
+    pos_vel = [0.0, 0.0]
     try:
         # 调用master_ID写入接口，通过电机应答反馈帧获取实时位置和速度
         write_property(id_num=id_num, index=0x7018, value=27, data_type='f')
@@ -798,7 +798,7 @@ def get_volcur(id_num=127):
 
     """
     global READ_FLAG
-    vol_cur = [0, 0]
+    vol_cur = [0.0, 0.0]
     try:
         vol_cur[0] = read_property(id_num=id_num, index=0x302b, data_type='f')
         vol_cur[1] = read_property(id_num=id_num, index=0x301e, data_type='f')
