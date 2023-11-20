@@ -61,7 +61,7 @@ MotorControl m_c;
 int main() {
   std::signal(SIGINT, [](int ctrl_c) { stop_signal = ctrl_c; });
   std::ofstream log;
-  log.open("../beigo_test/data/data.txt");
+  log.open("../../beigo_test/data/data.txt");
 
   float set_pos[12] = {0};
   float set_vel[12] = {0};
