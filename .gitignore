@@ -16,3 +16,4 @@ __pycache__/
 *.jpeg
 *.txt
 plot/data.txt
+plot/

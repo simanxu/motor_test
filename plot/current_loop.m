@@ -11,8 +11,9 @@ clc;
 close all;
 
 % 文件名
+filename = './data.txt';
 % filename = './beigo_test/data.txt';
-filename = './cyber_test/data/data.txt';
+% filename = './cyber_test/data/data.txt';
 % 要画的电机编号: 1,2,3...11,12
 can_id = 1;
 
@@ -27,30 +28,30 @@ vrid = can_id * 6 - 1;
 csid = can_id * 6;
 crid = can_id * 6 + 1;
 
-figure;
-hold on;
-box on;
-grid on;
-plot(t, t,'r','Linewidth',3.0)
-plot(t, t_set,'b','Linewidth',3.0)
-plot(t, t_get,'g','Linewidth',3.0)
-xlabel('Time (s)');
-ylabel('Different Time (s)');
-h = legend('Time Record Data','Time Set Value','Time Get Reading','location','northeast');
+##figure;
+##hold on;
+##box on;
+##grid on;
+##plot(t, t,'r','Linewidth',3.0)
+##plot(t, t_set,'b','Linewidth',3.0)
+##plot(t, t_get,'g','Linewidth',3.0)
+##xlabel('Time (s)');
+##ylabel('Different Time (s)');
+##h = legend('Time Record Data','Time Set Value','Time Get Reading','location','northeast');
 
-figure;
-hold on;
-box on;
-grid on;
-plot(t, data(:,psid),'r','Linewidth',2.0)
-plot(t, data(:,prid),'b','Linewidth',2.0)
-plot(t, data(:,vsid),'--r','Linewidth',2.0)
-plot(t, data(:,vrid),'--b','Linewidth',2.0)
-plot(t, data(:,csid),'.r','Linewidth',2.0)
-plot(t, data(:,crid),'.b','Linewidth',2.0)
-xlabel('Time (s)');
-h = legend('pos-set','pos-read','vel-set','vel-read','cur-set','cur-read');
-set(gca,'fontsize',30,'fontname','Times');
+##figure;
+##hold on;
+##box on;
+##grid on;
+##plot(t, data(:,psid),'r','Linewidth',2.0)
+##plot(t, data(:,prid),'b','Linewidth',2.0)
+##plot(t, data(:,vsid),'--r','Linewidth',2.0)
+##plot(t, data(:,vrid),'--b','Linewidth',2.0)
+##plot(t, data(:,csid),'.r','Linewidth',2.0)
+##plot(t, data(:,crid),'.b','Linewidth',2.0)
+##xlabel('Time (s)');
+##h = legend('pos-set','pos-read','vel-set','vel-read','cur-set','cur-read');
+##set(gca,'fontsize',30,'fontname','Times');
 
 in_one_fig = true;
 figure('units','normalized','position',[0.1,0.1,0.8,0.35])

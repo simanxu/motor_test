@@ -43,8 +43,8 @@ R_MIN_RAD_S = cm.pi / 30
 
 # linux系统下
 # 在 jetson nano（ubuntu）及树莓派（raspbian）下控制电机测试，相应的输入连接的串口和波特率
-result = os.popen("sudo ls -l /dev/ttyAMA*").read()
-# result = os.popen("sudo ls -l /dev/ttyACM*").read()
+# result = os.popen("sudo ls -l /dev/ttyAMA*").read()
+result = os.popen("sudo ls -l /dev/ttyACM*").read()
 # sudo chmod 666 /dev/ttyACM* 有时会报错，显示无曲线打开串口，这时需运行左侧命令
 com = result.split()[-1]
 # os.system("sudo chmod 777 " + com)
@@ -52,7 +52,7 @@ com = result.split()[-1]
 # uart = serial.Serial(com, 115200, timeout=0.5)
 
 
-print(com)
+# print(com)
 try:
     uart = serial.Serial(com, 115200, timeout=0.5)
     if uart.isOpen():
